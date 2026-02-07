@@ -9,7 +9,10 @@ A modern GNOME application for managing your study schedule using the spaced rep
 - **Calendar Views**: Monthly and weekly calendar views to visualize your study schedule
 - **Topic Organization**: Organize topics by areas and tags with custom colors
 - **Statistics**: Track total study time for each topic
+- **Backup & Restore**: Export and import your study data with optional password encryption
 - **Beautiful Interface**: Modern GNOME/Libadwaita design with dark mode support
+
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ## Installation
 
@@ -24,7 +27,7 @@ flatpak-builder --user --install --force-clean build-dir com.github.jobsr.Review
 
 ```bash
 # Install dependencies
-sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adwaita-1
+sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adwaita-1 python3-cryptography
 
 # Run directly
 python3 main.py

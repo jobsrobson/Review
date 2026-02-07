@@ -63,6 +63,7 @@ class RevisionPopover(Gtk.Popover):
                 btn_ok.add_css_class("flat")
                 btn_ok.add_css_class("success")
                 btn_ok.set_valign(Gtk.Align.CENTER)
+                btn_ok.set_tooltip_text("Concluir por Hoje")
                 btn_ok.connect("clicked", self.on_action, rev_id, topic_id, 'studied')
                 row.add_suffix(btn_ok)
                 
@@ -71,6 +72,7 @@ class RevisionPopover(Gtk.Popover):
                 btn_no.add_css_class("flat")
                 btn_no.add_css_class("error")
                 btn_no.set_valign(Gtk.Align.CENTER)
+                btn_no.set_tooltip_text("Estudar Amanhã")
                 btn_no.connect("clicked", self.on_action, rev_id, topic_id, 'missed')
                 row.add_suffix(btn_no)
 

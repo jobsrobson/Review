@@ -2,11 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='review',
-    version='1.0.1',
+    version='1.0.2',
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
         'PyGObject>=3.42.0',
+        'cryptography>=42.0.0',
     ],
     entry_points={
         'console_scripts': [

@@ -15,7 +15,7 @@ class ReviewWindow(Adw.ApplicationWindow):
         self.overlay = Gtk.Overlay()
         self.set_content(self.overlay)
         
-        self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.overlay.set_child(self.main_box)
 
         # Header Bar
@@ -35,6 +35,7 @@ class ReviewWindow(Adw.ApplicationWindow):
 
         # Stack for holding the views
         self.stack = Adw.ViewStack()
+        self.stack.set_margin_top(0)
         self.main_box.append(self.stack)
 
         # Connect Switcher to Stack
@@ -45,17 +46,11 @@ class ReviewWindow(Adw.ApplicationWindow):
         self._setup_actions()
 
         # HeaderBar Buttons
-        self.search_btn = Gtk.ToggleButton(icon_name="system-search-symbolic")
-        self.search_btn.set_tooltip_text("Buscar Tópicos")
-        self.search_btn.connect("toggled", self.on_search_toggled)
-        self.search_btn.set_visible(False) # Hidden by default until Topics view is active
-        self.header.pack_start(self.search_btn)
-
         self.add_btn = Gtk.Button(icon_name="list-add-symbolic")
         self.add_btn.set_tooltip_text("Novo Tópico")
         self.add_btn.set_action_name("win.add-topic")
         self.header.pack_start(self.add_btn)
-        
+
         # Refresh Button
         self.refresh_btn = Gtk.Button(icon_name="view-refresh-symbolic")
         self.refresh_btn.set_tooltip_text("Atualizar Calendário")
@@ -177,7 +172,7 @@ class ReviewWindow(Adw.ApplicationWindow):
             application_name="Review",
             application_icon="review-app",
             developer_name="Robson Ricardo",
-            version="1.0.1",
+            version="1.0.2",
             copyright="© 2026",
             website="https://github.com/jobsr/Review"
         )
@@ -192,12 +187,6 @@ class ReviewWindow(Adw.ApplicationWindow):
         if hasattr(self, 'topics_view') and hasattr(self.topics_view, 'refresh_topics'):
             self.topics_view.refresh_topics()
 
-    def on_search_toggled(self, btn):
-        is_active = btn.get_active()
-        if self.stack.get_visible_child_name() == "topics":
-            self.topics_view.search_bar.set_search_mode(is_active)
-            if is_active:
-                self.topics_view.search_entry.grab_focus()
     
     def on_refresh_clicked(self, btn):
         """Refresh the current calendar view"""
@@ -210,14 +199,9 @@ class ReviewWindow(Adw.ApplicationWindow):
     def on_view_changed(self, stack, param):
         name = stack.get_visible_child_name()
         if name == "topics":
-            self.search_btn.set_visible(True)
             self.refresh_btn.set_visible(False)
-            # Sync button state with search bar state
-            self.search_btn.set_active(self.topics_view.search_bar.get_search_mode())
         else:
             # Calendar views (overview, week)
-            self.search_btn.set_visible(False)
-            self.search_btn.set_active(False)
             self.refresh_btn.set_visible(True)
 
     def start_timer(self, topic_id, topic_title):

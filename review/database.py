@@ -220,5 +220,93 @@ class DatabaseManager:
         cursor.execute("SELECT COUNT(*) FROM topics")
         return cursor.fetchone()[0] == 0
 
+    def _derive_key(self, password, salt):
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        import base64
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+        )
+        return base64.urlsafe_b64encode(kdf.derive(password.encode()))
+
+    def export_database(self, target_path, password=None):
+        """Copies the current database to a target path, optionally encrypted."""
+        import shutil
+        import os
+        try:
+            self.conn.commit()
+            if not password:
+                shutil.copy2(DB_PATH, target_path)
+                return True
+            
+            # Encrypt
+            try:
+                from cryptography.fernet import Fernet
+            except ImportError:
+                return "CRYPTO_MISSING"
+
+            salt = os.urandom(16)
+            key = self._derive_key(password, salt)
+            fernet = Fernet(key)
+            
+            with open(DB_PATH, 'rb') as f:
+                data = f.read()
+            
+            encrypted_data = fernet.encrypt(data)
+            
+            with open(target_path, 'wb') as f:
+                f.write(salt + encrypted_data)
+            return True
+        except Exception as e:
+            print(f"Error exporting database: {e}")
+            return False
+
+    def import_database(self, source_path, password=None):
+        """Replaces the current database with a new one, optionally decrypted."""
+        import sqlite3
+        try:
+            with open(source_path, 'rb') as f:
+                content = f.read()
+            
+            # SQLite files start with "SQLite format 3\000"
+            is_sqlite = content.startswith(b"SQLite format 3\000")
+            
+            final_data = None
+            if not is_sqlite:
+                if not password:
+                    return "PASSWORD_REQUIRED"
+                
+                try:
+                    from cryptography.fernet import Fernet
+                except ImportError:
+                    return "CRYPTO_MISSING"
+
+                try:
+                    salt = content[:16]
+                    encrypted_data = content[16:]
+                    key = self._derive_key(password, salt)
+                    fernet = Fernet(key)
+                    final_data = fernet.decrypt(encrypted_data)
+                except Exception:
+                    return "INVALID_PASSWORD"
+            else:
+                final_data = content
+
+            self.conn.close()
+            with open(DB_PATH, 'wb') as f:
+                f.write(final_data)
+            self.conn = sqlite3.connect(DB_PATH)
+            return True
+        except Exception as e:
+            print(f"Error importing database: {e}")
+            try:
+                self.conn = sqlite3.connect(DB_PATH)
+            except:
+                pass
+            return False
+
     def close(self):
         self.conn.close()

@@ -26,16 +26,16 @@ button.error:hover {
 }
 
 .tag-pill {
-    background-color: alpha(@accent_color, 0.2);
+    background-color: alpha(@accent_color, 0.15);
     color: @accent_color;
-    border-radius: 12px;
+    border-radius: 6px;
     padding: 2px 8px;
-    font-size: 0.8em;
-    font-weight: bold;
+    font-size: 0.75em;
+    font-weight: 600;
     margin-right: 4px;
 }
 
-/* Full Calendar Grid Styles */
+/* Calendar Styles */
 .calendar-grid {
     background-color: @view_bg_color;
     border-top: 1px solid @borders;
@@ -44,7 +44,6 @@ button.error:hover {
 
 .day-cell {
     border: 1px solid alpha(@borders, 0.3);
-    border-radius: 0px;
     background-color: @card_bg_color;
     transition: all 200ms ease;
     min-height: 120px;
@@ -57,17 +56,6 @@ button.error:hover {
     box-shadow: 0 2px 8px alpha(@shade_color, 0.15);
 }
 
-.day-cell:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 4px alpha(@shade_color, 0.1);
-}
-
-.day-cell-empty {
-    background-color: alpha(@view_bg_color, 0.5);
-    border: 1px solid alpha(@borders, 0.2);
-    border-radius: 8px;
-}
-
 .today-label {
     background-color: @accent_bg_color;
     color: @accent_fg_color;
@@ -76,24 +64,10 @@ button.error:hover {
     font-weight: bold;
 }
 
-.revision-indicator {
-    border-radius: 4px;
-    padding: 2px 4px;
-    margin-top: 2px;
-}
-
 .indicator-dot {
     background-color: @accent_color;
     border-radius: 50%;
-}
-
-.indicator-label {
-    font-size: 8pt;
-}
-
-.indicator-studied {
-    text-decoration: line-through;
-    opacity: 0.5;
+    border: 1px solid white;
 }
 
 .studied-text {
@@ -109,21 +83,27 @@ button.error:hover {
     letter-spacing: 0.1em;
 }
 
-.title-1 {
-    font-size: 24pt;
-    font-weight: 800;
-}
-
-.title-2 {
-    font-size: 18pt;
-    font-weight: 700;
-}
-
-/* Custom Dialog / Card Appearance */
-.card,
-.custom-dialog {
-    background-color: @view_bg_color;
-    border: 1px solid @borders;
+/* Card Styles */
+.card {
+    background-color: @card_bg_color;
+    border: 1px solid alpha(@borders, 0.6);
     border-radius: 12px;
-    margin: 1px;
+    box-shadow: 0 1px 2px alpha(@shade_color, 0.04);
+}
+
+.card:hover {
+    background-color: mix(@card_bg_color, @accent_color, 0.04);
+    border-color: alpha(@accent_color, 0.3);
+    box-shadow: 0 4px 12px alpha(@shade_color, 0.1);
+}
+
+.navigation-sidebar {
+    background-color: alpha(@window_bg_color, 0.6);
+}
+
+.status-badge {
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 0.8em;
+    font-weight: 600;
 }

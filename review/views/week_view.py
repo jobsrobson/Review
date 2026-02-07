@@ -315,9 +315,24 @@ class WeekView(Gtk.Box):
                 status_label.add_css_class("success")
                 status_label.add_css_class("dim-label")
                 btn_box.append(status_label)
+
+                # Undo button
+                undo_btn = Gtk.Button(icon_name="edit-undo-symbolic")
+                undo_btn.set_tooltip_text("Desfazer Conclusão")
+                undo_btn.add_css_class("flat")
+                undo_btn.connect("clicked", self.on_undo_completion, rev_id)
+                btn_box.append(undo_btn)
             
             row.add_suffix(btn_box)
             list_box.append(row)
+    
+    def on_undo_completion(self, btn, rev_id):
+        """Revert revision to pending status"""
+        self.logic.mark_as_pending(rev_id)
+        if self.refresh_all:
+            self.refresh_all()
+        else:
+            self.refresh_calendar()
     
     def on_skip_topic(self, btn, rev_id, topic_id):
         """Skip revision and move to next day"""

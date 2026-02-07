@@ -36,6 +36,17 @@
   <developer_name>Robson Ricardo</developer_name>
   
   <releases>
+    <release version="1.0.2" date="2026-02-07">
+      <description>
+        <p>Database Backup and Restore</p>
+        <ul>
+          <li>Added database export and import functionality</li>
+          <li>Optional password encryption for backups</li>
+          <li>Bug fixes and UI improvements</li>
+          <li>Version bump to 1.0.2</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.1" date="2026-02-05">
       <description>
         <p>Initial release</p>

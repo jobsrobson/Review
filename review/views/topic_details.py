@@ -84,16 +84,6 @@ class TopicDetailsWindow(Adw.Window):
             self.entry_tags_row.set_selected(self.tag_names.index(topic[4]))
         info_group.add(self.entry_tags_row)
 
-        # Color Selection
-        color_row = Adw.ActionRow(title="Cor")
-        self.color_btn = Gtk.ColorButton()
-        rgba = Gdk.RGBA()
-        rgba.parse(topic[5] if topic[5] else "#3584e4")
-        self.color_btn.set_rgba(rgba)
-        self.color_btn.set_valign(Gtk.Align.CENTER)
-        color_row.add_suffix(self.color_btn)
-        info_group.add(color_row)
-        
         # Time Spent (Read Only)
         time_group = Adw.PreferencesGroup(title="Estatísticas")
         content.append(time_group)
@@ -143,7 +133,7 @@ class TopicDetailsWindow(Adw.Window):
         tags = self.tag_model.get_string(selected_tag_idx) if selected_tag_idx != Gtk.INVALID_LIST_POSITION else ""
         
         start_date = ui_to_db_date(self.entry_start.get_text())
-        color = self.color_btn.get_rgba().to_string()
+        color = self.topic[5]
         
         buf = self.txt_desc.get_buffer()
         start_iter, end_iter = buf.get_bounds()
@@ -151,6 +141,7 @@ class TopicDetailsWindow(Adw.Window):
         
         if title:
             self.logic.db.update_topic(self.topic[0], title, area, start_date, tags, color, description)
+            self.logic.sync_revisions_to_start_date(self.topic[0], start_date)
             if self.refresh_callback:
                 self.refresh_callback()
             self.close()

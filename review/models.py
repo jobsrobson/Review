@@ -53,9 +53,15 @@ class RevisionLogic:
             if interval == 0 or interval == 30:
                 start_date = datetime.strptime(scheduled_date, '%Y-%m-%d')
                 intervals = [7, 15, 30]
+                
+                # Check existing revisions to avoid duplicates
+                cursor.execute("SELECT interval_days FROM revisions WHERE topic_id = ?", (topic_id,))
+                existing_intervals = {r[0] for r in cursor.fetchall()}
+                
                 for new_interval in intervals:
-                    rev_date = (start_date + timedelta(days=new_interval)).strftime('%Y-%m-%d')
-                    self.db.add_revision(topic_id, rev_date, new_interval)
+                    if new_interval not in existing_intervals:
+                        rev_date = (start_date + timedelta(days=new_interval)).strftime('%Y-%m-%d')
+                        self.db.add_revision(topic_id, rev_date, new_interval)
 
     def mark_as_pending(self, revision_id):
         """Reverts a revision status to pending."""
@@ -103,3 +109,12 @@ class RevisionLogic:
             ORDER BY t.title
         ''', (date_str,))
         return cursor.fetchall()
+
+    def sync_revisions_to_start_date(self, topic_id, new_start_date_str):
+        """Updates the initial revision date if it hasn't been studied yet."""
+        cursor = self.db.conn.cursor()
+        cursor.execute("SELECT id FROM revisions WHERE topic_id = ? AND interval_days = 0 AND status = 'pending'", (topic_id,))
+        row = cursor.fetchone()
+        if row:
+            self.db.update_revision_date(row[0], new_start_date_str)
+        self.db.conn.commit()
