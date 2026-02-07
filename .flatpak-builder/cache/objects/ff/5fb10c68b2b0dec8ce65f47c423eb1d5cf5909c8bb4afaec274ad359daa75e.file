@@ -1,0 +1,9 @@
+/* Relying on Libadwaita native styles and utility classes. */
+.studied-text {
+    text-decoration: line-through;
+    opacity: 0.65;
+}
+
+.color-dot {
+    border-radius: 50%;
+}
