@@ -2,7 +2,7 @@ from gi.repository import Gtk, Adw, GObject
 from ..utils import db_to_ui_date
 import re
 
-HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+HEX_COLOR_REGEX = re.compile(r"^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\([0-9\s,.]+\))$")
 
 class RevisionPopover(Gtk.Popover):
     def __init__(self, date_str, revisions, logic, refresh_callback, edit_callback=None, **kwargs):

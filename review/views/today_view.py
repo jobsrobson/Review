@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from ..utils import db_to_ui_date
 import re
 
-HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+HEX_COLOR_REGEX = re.compile(r"^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\([0-9\s,.]+\))$")
 
 def format_time(seconds):
     """Format time intelligently: minutes until 59, then hours"""

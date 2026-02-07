@@ -3,7 +3,7 @@ from datetime import datetime
 from .revision_popover import RevisionPopover
 import re
 
-HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+HEX_COLOR_REGEX = re.compile(r"^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\([0-9\s,.]+\))$")
 
 class DayCell(Gtk.MenuButton):
     def __init__(self, day, month, year, revisions, logic, refresh_callback, edit_callback=None, **kwargs):

@@ -6,7 +6,7 @@ from .new_topic_dialog import NewTopicWindow
 from ..utils import db_to_ui_date, normalize_str
 import re
 
-HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+HEX_COLOR_REGEX = re.compile(r"^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\([0-9\s,.]+\))$")
 
 class TopicRow(Adw.ActionRow):
     def __init__(self, topic, logic, refresh_callback, parent_view, **kwargs):

@@ -1,6 +1,9 @@
 from gi.repository import Gtk, Adw, GObject
 from datetime import datetime, timedelta
 from ..models import RevisionLogic
+import re
+
+HEX_COLOR_REGEX = re.compile(r"^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\([0-9\s,.]+\))$")
 
 class WeekDayCell(Gtk.Button):
     """Simplified day cell for week view - no popover, just selection"""

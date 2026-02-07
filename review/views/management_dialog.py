@@ -1,7 +1,7 @@
 from gi.repository import Gtk, Adw, Gio, GObject, Gdk
 import re
 
-HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+HEX_COLOR_REGEX = re.compile(r"^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\([0-9\s,.]+\))$")
 
 class ManagementDialog(Adw.Window):
     def __init__(self, logic, refresh_callback, **kwargs):
