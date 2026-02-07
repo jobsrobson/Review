@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Review
+Comment=Spaced Repetition Study Manager
+Exec=review
+Icon=com.github.jobsr.Review
+Terminal=false
+Type=Application
+Categories=GTK;GNOME;Education;
+Keywords=study;revision;spaced-repetition;learning;
+StartupNotify=true

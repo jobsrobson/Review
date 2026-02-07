@@ -1,0 +1,11 @@
+[Application]
+name=com.github.jobsr.Review
+runtime=org.gnome.Platform/x86_64/48
+sdk=org.gnome.Sdk/x86_64/48
+command=review
+
+[Context]
+shared=network;ipc;
+sockets=x11;wayland;session-bus;fallback-x11;
+devices=dri;
+filesystems=xdg-data/review:create;

@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_install:
+	dh_auto_install
+	install -Dm644 review/icons/review-app.svg debian/review/usr/share/icons/hicolor/scalable/apps/com.github.jobsr.Review.svg
+	install -Dm644 com.github.jobsr.Review.desktop debian/review/usr/share/applications/com.github.jobsr.Review.desktop
+	install -Dm644 com.github.jobsr.Review.metainfo.xml debian/review/usr/share/metainfo/com.github.jobsr.Review.metainfo.xml

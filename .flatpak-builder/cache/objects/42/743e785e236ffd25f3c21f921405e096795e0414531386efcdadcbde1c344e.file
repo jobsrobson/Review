@@ -1,0 +1,4 @@
+#!/bin/sh
+export PYTHONPATH=/app/lib/review-app:$PYTHONPATH
+cd /app/lib/review-app
+exec python3 main.py "$@"

@@ -1,0 +1,36 @@
+Source: review
+Section: education
+Priority: optional
+Maintainer: Robson Ricardo <your-email@example.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               python3-all,
+               python3-setuptools,
+               python3-gi,
+               gir1.2-gtk-4.0,
+               gir1.2-adw-1
+Standards-Version: 4.6.0
+Homepage: https://github.com/jobsr/Review
+Vcs-Browser: https://github.com/jobsr/Review
+Vcs-Git: https://github.com/jobsr/Review.git
+
+Package: review
+Architecture: all
+Depends: ${python3:Depends},
+         ${misc:Depends},
+         python3-gi,
+         gir1.2-gtk-4.0,
+         gir1.2-adw-1,
+         gir1.2-glib-2.0
+Description: Spaced Repetition Study Manager
+ Review is a modern GNOME application for managing your study schedule
+ using the spaced repetition technique. It helps you remember what you
+ learn by scheduling reviews at optimal intervals.
+ .
+ Features:
+  - Automatic scheduling using spaced repetition (7, 15, 30 days)
+  - Built-in study timer with session tracking
+  - Calendar views (monthly and weekly)
+  - Topic organization by areas and tags
+  - Study time statistics
+  - Beautiful GNOME/Libadwaita interface

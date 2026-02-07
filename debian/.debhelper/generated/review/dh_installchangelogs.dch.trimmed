@@ -1,0 +1,10 @@
+review (1.0.0-1) unstable; urgency=medium
+
+  * Initial release
+  * Spaced repetition scheduling
+  * Study timer with fullscreen mode
+  * Calendar views (monthly and weekly)
+  * Topic management with areas and tags
+  * Study time tracking
+
+ -- Robson Ricardo <your-email@example.com>  Wed, 05 Feb 2026 18:00:00 -0300

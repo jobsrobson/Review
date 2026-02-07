@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.github.jobsr.Review</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Review</name>
+  <summary>Spaced Repetition Study Manager</summary>
+  
+  <description>
+    <p>
+      Review is a modern GNOME application for managing your study schedule using the spaced repetition technique.
+      It helps you remember what you learn by scheduling reviews at optimal intervals.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Automatic scheduling using spaced repetition (7, 15, 30 days)</li>
+      <li>Built-in study timer with session tracking</li>
+      <li>Calendar views (monthly and weekly)</li>
+      <li>Topic organization by areas and tags</li>
+      <li>Study time statistics</li>
+      <li>Beautiful GNOME/Libadwaita interface</li>
+    </ul>
+  </description>
+  
+  <launchable type="desktop-id">com.github.jobsr.Review.desktop</launchable>
+  
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main calendar view</caption>
+    </screenshot>
+  </screenshots>
+  
+  <url type="homepage">https://github.com/jobsr/Review</url>
+  <url type="bugtracker">https://github.com/jobsr/Review/issues</url>
+  
+  <developer_name>Robson Ricardo</developer_name>
+  
+  <releases>
+    <release version="1.0.1" date="2026-02-05">
+      <description>
+        <p>Initial release</p>
+        <ul>
+          <li>Spaced repetition scheduling</li>
+          <li>Study timer</li>
+          <li>Calendar views</li>
+          <li>Topic management</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+  
+  <content_rating type="oars-1.1" />
+  
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </recommends>
+</component>
