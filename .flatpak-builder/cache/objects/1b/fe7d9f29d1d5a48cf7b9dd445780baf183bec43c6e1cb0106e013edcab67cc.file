@@ -1,0 +1,5 @@
+[Runtime]
+name=com.github.jobsr.Review.Debug
+
+[ExtensionOf]
+ref=app/com.github.jobsr.Review/x86_64/master

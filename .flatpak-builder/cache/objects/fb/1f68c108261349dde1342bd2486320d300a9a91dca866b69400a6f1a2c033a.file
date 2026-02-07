@@ -1,0 +1,75 @@
+{
+  "id" : "com.github.jobsr.Review",
+  "runtime" : "org.gnome.Platform",
+  "runtime-version" : "48",
+  "runtime-commit" : "569891d0b3386cdfc8d09e000cac8a92edda18c54977d56e2c62e408dea780eb",
+  "sdk" : "org.gnome.Sdk",
+  "sdk-commit" : "fb0c942aeb9c609877b413cda2e1249665a0ae0aa67c31244fd8f03af33ff41b",
+  "command" : "review",
+  "modules" : [
+    {
+      "name" : "python3-cryptography",
+      "buildsystem" : "simple",
+      "sources" : [
+        {
+          "url" : "https://files.pythonhosted.org/packages/78/2d/7fa73dfa841b5ac06c7b8855cfc18622132e365f5b81d02230333ff26e9e/cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+          "sha256" : "3e17ed538242334bf70832644a32a7aae3d83b57567f9fd60a26257e992b79ba",
+          "type" : "file"
+        },
+        {
+          "url" : "https://files.pythonhosted.org/packages/c0/35/690e809be77896111f5b195ede56e4b4ed0435b428c2f2b6d35046fbb5e8/cryptography-46.0.4-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+          "sha256" : "47bcd19517e6389132f76e2d5303ded6cf3f78903da2158a671be8de024f4cd0",
+          "type" : "file"
+        },
+        {
+          "url" : "https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl",
+          "sha256" : "b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992",
+          "type" : "file"
+        }
+      ],
+      "build-commands" : [
+        "pip3 install --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"cryptography\""
+      ]
+    },
+    {
+      "name" : "review",
+      "buildsystem" : "simple",
+      "sources" : [
+        {
+          "path" : ".",
+          "type" : "dir"
+        }
+      ],
+      "build-commands" : [
+        "mkdir -p /app/lib/review-app",
+        "cp -r review /app/lib/review-app/",
+        "cp main.py /app/lib/review-app/",
+        "install -Dm755 /dev/stdin /app/bin/review <<'EOF'\n#!/bin/sh\nexport PYTHONPATH=/app/lib/review-app:$PYTHONPATH\ncd /app/lib/review-app\nexec python3 main.py \"$@\"\nEOF",
+        "install -Dm644 review/icons/review-app.svg /app/share/icons/hicolor/scalable/apps/com.github.jobsr.Review.svg",
+        "install -Dm644 com.github.jobsr.Review.desktop /app/share/applications/com.github.jobsr.Review.desktop",
+        "install -Dm644 com.github.jobsr.Review.metainfo.xml /app/share/metainfo/com.github.jobsr.Review.metainfo.xml"
+      ]
+    }
+  ],
+  "cleanup" : [
+    "/include",
+    "/lib/pkgconfig",
+    "/man",
+    "/share/doc",
+    "/share/gtk-doc",
+    "/share/man",
+    "/share/pkgconfig",
+    "*.la",
+    "*.a"
+  ],
+  "finish-args" : [
+    "--share=ipc",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--device=dri",
+    "--share=network",
+    "--socket=session-bus",
+    "--filesystem=xdg-data/review:create"
+  ],
+  "source-date-epoch" : 1770481784
+}
