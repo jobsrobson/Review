@@ -22,7 +22,7 @@ class BulkImportDialog(Adw.Window):
         main_box.append(header)
         
         self.cancel_btn = Gtk.Button(label="Cancelar")
-        self.cancel_btn.connect("clicked", lambda x: self.close())
+        self.cancel_btn.connect("clicked", lambda x: self.destroy())
         header.pack_start(self.cancel_btn)
         
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)

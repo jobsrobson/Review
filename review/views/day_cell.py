@@ -1,6 +1,9 @@
 from gi.repository import Gtk, Adw, GObject
 from datetime import datetime
 from .revision_popover import RevisionPopover
+import re
+
+HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 class DayCell(Gtk.MenuButton):
     def __init__(self, day, month, year, revisions, logic, refresh_callback, edit_callback=None, **kwargs):
@@ -69,11 +72,15 @@ class DayCell(Gtk.MenuButton):
             
             # Apply color if available (index 7 from query)
             if len(rev) > 7 and rev[7]:
-                provider = Gtk.CssProvider()
-                css = f"* {{ background-color: {rev[7]}; border-radius: 50%; }}"
-                provider.load_from_data(css.encode())
-                context = dot.get_style_context()
-                context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                col = rev[7]
+                if isinstance(col, str) and HEX_COLOR_REGEX.match(col.strip()):
+                    try:
+                        provider = Gtk.CssProvider()
+                        css = f"* {{ background-color: {col}; border-radius: 50%; }}"
+                        provider.load_from_data(css.encode())
+                        context = dot.get_style_context()
+                        context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                    except: pass
                 
             indicator.append(dot)
             

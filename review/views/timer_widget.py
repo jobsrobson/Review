@@ -4,6 +4,7 @@ import time
 class TimerWidget(Gtk.Box):
     __gsignals__ = {
         'session-finished': (GObject.SignalFlags.RUN_FIRST, None, (int, int)), # topic_id, duration
+        'fullscreen-toggled': (GObject.SignalFlags.RUN_FIRST, None, (bool,)), # is_fullscreen
     }
 
     def __init__(self, **kwargs):
@@ -11,15 +12,13 @@ class TimerWidget(Gtk.Box):
         self.set_orientation(Gtk.Orientation.HORIZONTAL)
         self.set_spacing(12)
         self.set_visible(False) # Hidden by default
-        # self.set_halign(Gtk.Align.CENTER) # Removed for full width
-        # self.set_margin_top(12) 
-        # self.set_margin_bottom(12) # Removed margin so it touches bottom edge if needed
-        # Or keep small margin for "floating" look.
-        # "estique-o horizontalmente até as bordas" -> usually means no margin or full width.
-        # "flutuando na parte de baixo" -> implies simple overlay positioning.
         
+        # Initial positioning for banner mode (full width with margins)
         self.set_halign(Gtk.Align.FILL)
-        self.set_hexpand(True)
+        self.set_valign(Gtk.Align.END)
+        self.set_margin_start(0)
+        self.set_margin_end(0)
+        self.set_margin_bottom(0)
         
         self.topic_id = None
         self.start_time = 0
@@ -34,27 +33,34 @@ class TimerWidget(Gtk.Box):
         provider = Gtk.CssProvider()
         css = """
         .timer-banner {
-            background-color: @accent_bg_color;
-            color: @accent_fg_color;
-            border-radius: 0px; 
-            padding: 6px 12px; 
+            background-color: #3584e4;
+            color: #ffffff;
+            border-radius: 12px; 
+            padding: 12px 16px; 
             font-weight: bold;
         }
         .timer-banner label {
-            color: @accent_fg_color;
+            color: #ffffff;
+        }
+        
+        .timer-fullscreen {
+            background-color: #3584e4;
+            color: #ffffff;
+            border-radius: 0px;
+            padding: 0px;
         }
         
         .huge-timer {
             font-size: 120px;
             font-weight: bold;
         }
-        .timer-banner button {
-             color: @accent_fg_color;
+        .timer-banner button, .timer-fullscreen button {
+             color: #ffffff;
              background: rgba(255, 255, 255, 0.2);
              border: none;
              box-shadow: none;
         }
-        .timer-banner button:hover {
+        .timer-banner button:hover, .timer-fullscreen button:hover {
              background: rgba(255, 255, 255, 0.4);
         }
         """
@@ -71,7 +77,7 @@ class TimerWidget(Gtk.Box):
         self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         self.append(self.stack)
 
-        # --- View 1: Banner ---
+        # --- View 1: Banner (Full) ---
         self.banner_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         
         # Click controller for expansion
@@ -232,15 +238,41 @@ class TimerWidget(Gtk.Box):
         return True
 
     def on_banner_clicked(self, gesture, n_press, x, y):
+        # Switch to fullscreen mode
+        self.set_halign(Gtk.Align.FILL)
         self.set_valign(Gtk.Align.FILL)
+        self.set_hexpand(True)
+        self.set_vexpand(True)  # Takes full height
+        self.set_margin_start(0)
+        self.set_margin_end(0)
+        self.set_margin_bottom(0)
+        self.set_margin_top(0)
+        
+        self.remove_css_class("timer-banner")
+        self.add_css_class("timer-fullscreen")
+        
         self.stack.set_visible_child_name("fullscreen")
         self.is_fullscreen = True
+        self.emit('fullscreen-toggled', True)
         
     def on_minimize_clicked(self, btn):
+        # Switch to banner mode (full width with margins)
+        self.set_halign(Gtk.Align.FILL)
         self.set_valign(Gtk.Align.END)
+        self.set_hexpand(True)
+        self.set_vexpand(False)  # Compact height
+        self.set_margin_start(0)
+        self.set_margin_end(0)
+        self.set_margin_bottom(0)
+        self.set_margin_top(0)
+        
+        self.remove_css_class("timer-fullscreen")
+        self.add_css_class("timer-banner")
+        
         self.stack.set_visible_child_name("banner")
         self.is_fullscreen = False
-
+        self.emit('fullscreen-toggled', False)
+    
     def on_pause_clicked(self, btn):
         if self.is_paused:
             # Resume
@@ -265,9 +297,7 @@ class TimerWidget(Gtk.Box):
         
         # Reset to banner mode if in fullscreen
         if self.is_fullscreen:
-            self.set_valign(Gtk.Align.END)
-            self.stack.set_visible_child_name("banner")
-            self.is_fullscreen = False
+            self.on_minimize_clicked(None)
             
         self.emit('session-finished', self.topic_id, self.elapsed)
         self.set_visible(False)

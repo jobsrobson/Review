@@ -61,11 +61,15 @@ class WeekDayCell(Gtk.Button):
             
             # Apply color if available (index 7 from query)
             if len(rev) > 7 and rev[7]:
-                provider = Gtk.CssProvider()
-                css = f"* {{ background-color: {rev[7]}; border-radius: 50%; }}"
-                provider.load_from_data(css.encode())
-                context = dot.get_style_context()
-                context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                col = rev[7]
+                if isinstance(col, str) and HEX_COLOR_REGEX.match(col.strip()):
+                    try:
+                        provider = Gtk.CssProvider()
+                        css = f"* {{ background-color: {col}; border-radius: 50%; }}"
+                        provider.load_from_data(css.encode())
+                        context = dot.get_style_context()
+                        context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                    except: pass
                 
             indicator.append(dot)
             

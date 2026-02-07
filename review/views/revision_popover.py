@@ -1,5 +1,8 @@
 from gi.repository import Gtk, Adw, GObject
 from ..utils import db_to_ui_date
+import re
+
+HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 class RevisionPopover(Gtk.Popover):
     def __init__(self, date_str, revisions, logic, refresh_callback, edit_callback=None, **kwargs):
@@ -40,19 +43,32 @@ class RevisionPopover(Gtk.Popover):
             # rev: (id, topic_id, scheduled_date, status, interval_days, title, area, color)
             rev_id, topic_id, _, status, interval, title, area, _ = rev
             
-            row = Adw.ActionRow(title=title, subtitle=f"Intervalo: {interval} dias")
+            # Truncate long titles
+            display_title = title if len(title) <= 40 else title[:37] + "..."
+            
+            row = Adw.ActionRow(title=display_title, subtitle=f"Intervalo: {interval} dias")
             
             # Color indicator
             if len(rev) > 7 and rev[7]:
-                dot = Gtk.Box()
-                dot.set_size_request(8, 8)
-                dot.set_valign(Gtk.Align.CENTER)
-                provider = Gtk.CssProvider()
-                css = f"* {{ background-color: {rev[7]}; border-radius: 50%; }}"
-                provider.load_from_data(css.encode())
-                context = dot.get_style_context()
-                context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-                row.add_prefix(dot)
+                col = rev[7]
+                if isinstance(col, str) and HEX_COLOR_REGEX.match(col.strip()):
+                    dot = Gtk.Box()
+                    dot.set_size_request(8, 8)
+                    dot.set_valign(Gtk.Align.CENTER)
+                    # try:
+                    #     provider = Gtk.CssProvider()
+                    #     css = f".indicator-dot {{ background-color: {col}; border-radius: 50%; }}"
+                    #     # css = f"* {{ background-color: {col}; border-radius: 50%; }}" # original selector was *
+                    #     # wait, original selector was * {{ ... }} in popover?
+                    #     # Let's check original content.
+                    #     # It was *
+                    #     css = f"* {{ background-color: {col}; border-radius: 50%; }}"
+                    #     provider.load_from_data(css.encode())
+                    #     context = dot.get_style_context()
+                    #     context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                    #     row.add_prefix(dot)
+                    # except: pass
+                    pass
                 
             if status == 'studied':
                 row.add_css_class("dim-label")

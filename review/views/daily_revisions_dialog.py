@@ -1,4 +1,4 @@
-from gi.repository import Gtk, Adw, GObject
+from gi.repository import Gtk, Adw, GObject, Gdk
 from ..utils import db_to_ui_date
 
 class DailyRevisionsDialog(Adw.Window):
@@ -21,6 +21,7 @@ class DailyRevisionsDialog(Adw.Window):
         
         sub_title = Gtk.Label(label=f"Total: {len(revisions)} revisões")
         sub_title.add_css_class("dim-label")
+        sub_title.set_margin_top(12)
         sub_title.set_margin_bottom(12)
         main_box.append(sub_title)
         
@@ -45,17 +46,28 @@ class DailyRevisionsDialog(Adw.Window):
             
             row = Adw.ActionRow(title=title, subtitle=f"{area} • Intervalo: {interval} dias")
             
-             # Color indicator
+            # Color indicator
             if len(rev) > 7 and rev[7]:
-                dot = Gtk.Box()
-                dot.set_size_request(8, 8)
-                dot.set_valign(Gtk.Align.CENTER)
-                provider = Gtk.CssProvider()
-                css = f"* {{ background-color: {rev[7]}; border-radius: 50%; }}"
-                provider.load_from_data(css.encode())
-                context = dot.get_style_context()
-                context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-                row.add_prefix(dot)
+                valid_color = False
+                col = rev[7]
+                if isinstance(col, str):
+                    try:
+                        if Gdk.RGBA().parse(col):
+                            valid_color = True
+                    except: pass
+                
+                if valid_color:
+                    dot = Gtk.Box()
+                    dot.set_size_request(8, 8)
+                    dot.set_valign(Gtk.Align.CENTER)
+                    try:
+                        provider = Gtk.CssProvider()
+                        css = f"* {{ background-color: {col}; border-radius: 50%; }}"
+                        provider.load_from_data(css.encode())
+                        context = dot.get_style_context()
+                        context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                        row.add_prefix(dot)
+                    except: pass
             
             if status == 'studied':
                 row.add_css_class("dim-label")

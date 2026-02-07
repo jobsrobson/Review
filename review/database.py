@@ -61,6 +61,17 @@ class DatabaseManager:
                 color TEXT
             )
         ''')
+
+        # NEW: Study Sessions table for daily stats
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS study_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                topic_id INTEGER NOT NULL,
+                duration_seconds INTEGER NOT NULL,
+                session_date TEXT NOT NULL,
+                FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE
+            )
+        ''')
         
         self.conn.commit()
         
@@ -183,7 +194,21 @@ class DatabaseManager:
     def update_time_spent(self, topic_id, duration_seconds):
         cursor = self.conn.cursor()
         cursor.execute('UPDATE topics SET time_spent = time_spent + ? WHERE id = ?', (duration_seconds, topic_id))
+        
+        # Track dated session
+        today = datetime.now().strftime('%Y-%m-%d')
+        cursor.execute('''
+            INSERT INTO study_sessions (topic_id, duration_seconds, session_date)
+            VALUES (?, ?, ?)
+        ''', (topic_id, duration_seconds, today))
+        
         self.conn.commit()
+
+    def get_study_time_for_date(self, date_str):
+        cursor = self.conn.cursor()
+        cursor.execute('SELECT SUM(duration_seconds) FROM study_sessions WHERE session_date = ?', (date_str,))
+        result = cursor.fetchone()
+        return result[0] if result[0] is not None else 0
 
     def update_revision_date(self, revision_id, new_date):
         cursor = self.conn.cursor()
@@ -219,6 +244,16 @@ class DatabaseManager:
         cursor = self.conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM topics")
         return cursor.fetchone()[0] == 0
+    
+    def get_study_time_for_date(self, date_str):
+        """Get total study time in seconds for a specific date"""
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT SUM(duration_seconds) FROM study_sessions 
+            WHERE session_date = ?
+        ''', (date_str,))
+        result = cursor.fetchone()[0]
+        return result if result is not None else 0
 
     def _derive_key(self, password, salt):
         from cryptography.hazmat.primitives import hashes

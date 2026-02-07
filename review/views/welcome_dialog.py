@@ -1,71 +1,74 @@
-from gi.repository import Gtk, Adw, Pango
+from gi.repository import Gtk, Adw, Pango, Gdk, Gio, GObject, GLib
+from datetime import datetime
+from ..utils import db_to_ui_date, ui_to_db_date
 
 class WelcomeDialog(Adw.Window):
-    def __init__(self, **kwargs):
+    def __init__(self, logic, refresh_callback, **kwargs):
         super().__init__(**kwargs)
+        self.logic = logic
+        self.refresh_callback = refresh_callback
+        
         self.set_title("Bem-vindo")
-        self.set_default_size(500, 400)
+        self.set_default_size(500, 550)
         self.set_modal(True)
         
-        # Main Layout (Box)
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.set_content(main_box)
+        # Main Layout (Stack)
+        self.stack = Adw.ViewStack()
+        self.set_content(self.stack)
         
-        # Carousel
+        # 1. Page: Introduction (Carousel)
+        self.setup_intro_page()
+        
+        # 2. Page: Add Area
+        self.setup_area_page()
+        
+        # 3. Page: Add Topic
+        self.setup_topic_page()
+        
+        # 4. Page: Bulk Import Option / Finished
+        self.setup_finish_page()
+
+    def setup_intro_page(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        
         self.carousel = Adw.Carousel()
         self.carousel.set_vexpand(True)
-        self.carousel.set_hexpand(True)
         self.carousel.set_spacing(24)
-        main_box.append(self.carousel)
+        box.append(self.carousel)
         
-        # Slide 1: Welcome
-        self.add_slide(
-            "Bem-vindo ao Review", 
-            "Seu assistente pessoal de estudos e revisão espaçada.",
-            "review-app" 
-        )
-        
-        # Slide 2: Organize
-        self.add_slide(
-            "Organize-se", 
-            "Crie tópicos, categorize por áreas e use tags para manter tudo em ordem. Personalize com cores.",
-            "document-open-recent-symbolic"
-        )
-        
-        # Slide 3: Revise
-        self.add_slide(
-            "Revisão Espaçada", 
-            "O método científico para não esquecer. O Review agenda automaticamente suas revisões para 7, 15 e 30 dias.",
-            "document-revert-symbolic" # custom icon
-        )
+        self.add_intro_slide("Bem-vindo ao Review", "Seu assistente pessoal de estudos e revisão espaçada.", "review-app")
+        self.add_intro_slide("Organize-se", "Categorize por áreas e use tags para manter tudo em ordem.", "document-open-recent-symbolic")
+        self.add_intro_slide("Revisão Espaçada", "Automatize suas revisões para 7, 15 e 30 dias.", "document-revert-symbolic")
 
-        # Slide 4: Track
-        self.add_slide(
-            "Acompanhe", 
-            "Use o calendário para ver o que estudar a cada dia e receba notificações para não perder o ritmo.",
-            "edit-find-symbolic"
-        )
-        
-        # Indicators
         indicators = Adw.CarouselIndicatorDots()
         indicators.set_carousel(self.carousel)
-        indicators.set_margin_bottom(24)
-        main_box.append(indicators)
+        indicators.set_margin_bottom(12)
+        box.append(indicators)
         
-        # Footer Button
-        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        btn_box.set_halign(Gtk.Align.CENTER)
-        btn_box.set_margin_bottom(24)
-        main_box.append(btn_box)
+        footer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        footer.set_margin_bottom(24)
+        footer.set_margin_start(24)
+        footer.set_margin_end(24)
+        box.append(footer)
         
-        self.btn_start = Gtk.Button(label="Vamos lá")
-        self.btn_start.add_css_class("pill")
-        self.btn_start.add_css_class("suggested-action")
-        self.btn_start.set_size_request(200, 50)
-        self.btn_start.connect("clicked", lambda x: self.close())
-        btn_box.append(self.btn_start)
+        import_btn = Gtk.Button(label="Importação em Lote")
+        import_btn.add_css_class("flat")
+        import_btn.connect("clicked", self.on_bulk_import_clicked)
+        footer.append(import_btn)
+        
+        spacer = Gtk.Box()
+        spacer.set_hexpand(True)
+        footer.append(spacer)
+        
+        self.btn_next = Gtk.Button(label="Começar Setup")
+        self.btn_next.add_css_class("pill")
+        self.btn_next.add_css_class("suggested-action")
+        self.btn_next.connect("clicked", lambda x: self.stack.set_visible_child_name("area"))
+        footer.append(self.btn_next)
+        
+        self.stack.add_named(box, "intro")
 
-    def add_slide(self, title_text, desc_text, icon_name):
+    def add_intro_slide(self, title_text, desc_text, icon_name):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         box.set_valign(Gtk.Align.CENTER)
         box.set_halign(Gtk.Align.CENTER)
@@ -90,3 +93,160 @@ class WelcomeDialog(Adw.Window):
         
         self.carousel.append(box)
 
+    def setup_area_page(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        box.set_margin_start(32)
+        box.set_margin_end(32)
+        box.set_margin_top(48)
+        
+        img = Gtk.Image.new_from_icon_name("tag-symbolic")
+        img.set_pixel_size(64)
+        img.add_css_class("accent")
+        box.append(img)
+        
+        title = Gtk.Label(label="Passo 1: Criar uma Área")
+        title.add_css_class("title-2")
+        box.append(title)
+        
+        desc = Gtk.Label(label="As áreas ajudam a organizar seus tópicos (ex: Medicina, Programação, Concursos).")
+        desc.set_wrap(True)
+        desc.set_justify(Gtk.Justification.CENTER)
+        desc.add_css_class("dim-label")
+        box.append(desc)
+        
+        group = Adw.PreferencesGroup()
+        box.append(group)
+        
+        self.area_entry = Adw.EntryRow(title="Nome da Área")
+        group.add(self.area_entry)
+        
+        color_row = Adw.ActionRow(title="Cor")
+        self.area_color_btn = Gtk.ColorButton()
+        rgba = Gdk.RGBA()
+        rgba.parse("#3584e4")
+        self.area_color_btn.set_rgba(rgba)
+        self.area_color_btn.set_valign(Gtk.Align.CENTER)
+        color_row.add_suffix(self.area_color_btn)
+        group.add(color_row)
+        
+        spacer = Gtk.Box()
+        spacer.set_vexpand(True)
+        box.append(spacer)
+        
+        btn_next = Gtk.Button(label="Criar Área e Continuar")
+        btn_next.add_css_class("pill")
+        btn_next.add_css_class("suggested-action")
+        btn_next.set_margin_bottom(32)
+        btn_next.connect("clicked", self.on_create_area_clicked)
+        box.append(btn_next)
+        
+        self.stack.add_named(box, "area")
+
+    def on_create_area_clicked(self, btn):
+        name = self.area_entry.get_text()
+        color = self.area_color_btn.get_rgba().to_string()
+        if name:
+            self.logic.db.add_area(name, color)
+            self.refresh_topic_fields() # Update dropdown
+            self.stack.set_visible_child_name("topic")
+
+    def setup_topic_page(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        box.set_margin_start(32)
+        box.set_margin_end(32)
+        box.set_margin_top(48)
+        
+        img = Gtk.Image.new_from_icon_name("view-list-bullet-symbolic")
+        img.set_pixel_size(64)
+        img.add_css_class("accent")
+        box.append(img)
+        
+        title = Gtk.Label(label="Passo 2: Seu Primeiro Tópico")
+        title.add_css_class("title-2")
+        box.append(title)
+        
+        desc = Gtk.Label(label="O que você está estudando agora?")
+        desc.set_wrap(True)
+        desc.set_justify(Gtk.Justification.CENTER)
+        desc.add_css_class("dim-label")
+        box.append(desc)
+        
+        group = Adw.PreferencesGroup()
+        box.append(group)
+        
+        self.topic_title = Adw.EntryRow(title="Título do Tópico")
+        group.add(self.topic_title)
+        
+        self.area_model = Gtk.StringList.new([])
+        self.area_combo = Adw.ComboRow(title="Área", model=self.area_model)
+        group.add(self.area_combo)
+        
+        self.topic_tags = Adw.EntryRow(title="Tags (separadas por vírgula)")
+        self.topic_tags.set_text("Estudo")
+        group.add(self.topic_tags)
+        
+        spacer = Gtk.Box()
+        spacer.set_vexpand(True)
+        box.append(spacer)
+        
+        btn_finish = Gtk.Button(label="Concluir e Começar")
+        btn_finish.add_css_class("pill")
+        btn_finish.add_css_class("suggested-action")
+        btn_finish.set_margin_bottom(32)
+        btn_finish.connect("clicked", self.on_create_topic_clicked)
+        box.append(btn_finish)
+        
+        self.stack.add_named(box, "topic")
+
+    def refresh_topic_fields(self):
+        areas = self.logic.db.get_areas()
+        # Update combo model
+        self.area_model.splice(0, self.area_model.get_n_items(), [a[1] for a in areas])
+        if areas:
+            self.area_combo.set_selected(len(areas) - 1) # Select the newly created one
+
+    def on_create_topic_clicked(self, btn):
+        title = self.topic_title.get_text()
+        idx = self.area_combo.get_selected()
+        area = self.area_model.get_string(idx) if idx != Gtk.INVALID_LIST_POSITION else ""
+        tags = self.topic_tags.get_text()
+        
+        if title and area:
+            self.logic.create_topic_with_revisions(title, area, datetime.now().strftime('%Y-%m-%d'), tags, "#3584e4")
+            if self.refresh_callback:
+                self.refresh_callback()
+            self.stack.set_visible_child_name("finish")
+
+    def setup_finish_page(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=24)
+        box.set_valign(Gtk.Align.CENTER)
+        box.set_halign(Gtk.Align.CENTER)
+        
+        img = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
+        img.set_pixel_size(96)
+        img.add_css_class("success")
+        box.append(img)
+        
+        title = Gtk.Label(label="Tudo pronto!")
+        title.add_css_class("title-1")
+        box.append(title)
+        
+        desc = Gtk.Label(label="Seu primeiro tópico foi criado. Bons estudos!")
+        desc.add_css_class("body")
+        box.append(desc)
+        
+        btn_done = Gtk.Button(label="Ir para o Review")
+        btn_done.add_css_class("pill")
+        btn_done.add_css_class("suggested-action")
+        btn_done.set_size_request(200, 50)
+        btn_done.connect("clicked", lambda x: self.destroy())
+        box.append(btn_done)
+        
+        self.stack.add_named(box, "finish")
+
+    def on_bulk_import_clicked(self, btn):
+        transient = self.get_transient_for()
+        self.destroy()
+        # Open bulk import via window safely after this dialog is gone
+        if transient and hasattr(transient, 'on_bulk_import_activated'):
+            GLib.idle_add(lambda: transient.on_bulk_import_activated(None, None))

@@ -1,0 +1,2 @@
+DEBUG: Attempting to send notification: Tudo em dia! - Nenhuma revisão pendente para hoje.
+DEBUG: Notification sent to system.

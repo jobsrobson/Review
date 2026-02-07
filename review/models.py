@@ -110,6 +110,24 @@ class RevisionLogic:
         ''', (date_str,))
         return cursor.fetchall()
 
+    def get_today_stats(self):
+        """Returns statistics for the current day."""
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Pending topics
+        revisions = self.get_upcoming_revisions(today)
+        pending_count = sum(1 for rev in revisions if rev[3] == 'pending')
+        completed_count = sum(1 for rev in revisions if rev[3] == 'studied')
+        
+        # Total study time today
+        duration_seconds = self.db.get_study_time_for_date(today)
+        
+        return {
+            'pending_count': pending_count,
+            'completed_count': completed_count,
+            'total_duration': duration_seconds
+        }
+
     def sync_revisions_to_start_date(self, topic_id, new_start_date_str):
         """Updates the initial revision date if it hasn't been studied yet."""
         cursor = self.db.conn.cursor()

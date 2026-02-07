@@ -4,13 +4,18 @@ from datetime import datetime
 from .topic_details import TopicDetailsWindow
 from .new_topic_dialog import NewTopicWindow
 from ..utils import db_to_ui_date, normalize_str
+import re
+
+HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 class TopicRow(Adw.ActionRow):
-    def __init__(self, topic, logic, refresh_callback, **kwargs):
+    def __init__(self, topic, logic, refresh_callback, parent_view, **kwargs):
         super().__init__(**kwargs)
         self.topic_id = topic[0]
+        self.topic = topic
         self.logic = logic
         self.refresh_callback = refresh_callback
+        self.parent_view = parent_view
         
         self.add_css_class("card")
         self.set_margin_bottom(8)
@@ -29,12 +34,20 @@ class TopicRow(Adw.ActionRow):
         if len(topic) > 7 and topic[7]:
             display_color = topic[7]
             
-        if display_color:
-            provider = Gtk.CssProvider()
-            css = f"* {{ background-color: {display_color}; border-radius: 50%; }}"
-            provider.load_from_data(css.encode())
-            color_dot.get_style_context().add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-            
+        valid_color = False
+        if display_color and isinstance(display_color, str):
+            if HEX_COLOR_REGEX.match(str(display_color).strip()):
+                valid_color = True
+
+        if valid_color:
+            try:
+                provider = Gtk.CssProvider()
+                css = f".indicator-dot {{ background-color: {display_color}; border-radius: 50%; }}"
+                provider.load_from_data(css.encode())
+                color_dot.get_style_context().add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            except Exception:
+                pass
+
         self.add_prefix(color_dot)
         
         # Suffix components
@@ -73,6 +86,35 @@ class TopicRow(Adw.ActionRow):
         suffix_box.append(time_lbl)
 
         self.add_suffix(suffix_box)
+        
+        # Right-click context menu
+        gesture = Gtk.GestureClick()
+        gesture.set_button(3)
+        gesture.connect("pressed", self.on_right_click)
+        self.add_controller(gesture)
+    
+    def on_right_click(self, gesture, n_press, x, y):
+        menu = Gio.Menu()
+        menu.append("Editar Tópico", "topic.edit")
+        menu.append("Apagar Tópico", "topic.delete")
+        
+        popover = Gtk.PopoverMenu.new_from_model(menu)
+        popover.set_parent(self)
+        popover.set_has_arrow(False)
+        popover.set_pointing_to(Gdk.Rectangle(x=int(x), y=int(y), width=1, height=1))
+        
+        action_group = Gio.SimpleActionGroup()
+        
+        edit_action = Gio.SimpleAction.new("edit", None)
+        edit_action.connect("activate", lambda a, p: self.parent_view.on_edit_topic(self.topic))
+        action_group.add_action(edit_action)
+        
+        delete_action = Gio.SimpleAction.new("delete", None)
+        delete_action.connect("activate", lambda a, p: self.parent_view.on_delete_topic(self.topic))
+        action_group.add_action(delete_action)
+        
+        popover.insert_action_group("topic", action_group)
+        popover.popup()
 
     def get_next_revision(self, topic_id):
         cursor = self.logic.db.conn.cursor()
@@ -91,49 +133,9 @@ class TopicsView(Gtk.Box):
         self.refresh_all_external = refresh_callback
         self.current_area_filter = None
         
-        self.set_margin_top(0) 
-        self.set_margin_bottom(0)
-        
-        self.split_view = Adw.NavigationSplitView()
-        self.split_view.set_vexpand(True)
-        self.append(self.split_view)
-        
-        # Sidebar Page
-        sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        sidebar_box.add_css_class("navigation-sidebar")
-        sidebar_box.set_margin_top(0)
-        
-        self.sidebar_list = Gtk.ListBox()
-        self.sidebar_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
-        self.sidebar_list.add_css_class("sidebar")
-        self.sidebar_list.connect("row-activated", self.on_area_selected)
-        
-        self.sidebar_gesture = Gtk.GestureClick()
-        self.sidebar_gesture.set_button(3)
-        self.sidebar_gesture.connect("pressed", self.on_sidebar_right_click)
-        self.sidebar_list.add_controller(self.sidebar_gesture)
-        
-        scrolled_sidebar = Gtk.ScrolledWindow()
-        scrolled_sidebar.set_vexpand(True)
-        scrolled_sidebar.set_child(self.sidebar_list)
-        sidebar_box.append(scrolled_sidebar)
-        
-        # Use ToolbarView to ensure no extra header padding is added
-        sidebar_toolbar = Adw.ToolbarView()
-        sidebar_toolbar.set_content(sidebar_box)
-        
-        sidebar_page = Adw.NavigationPage(child=sidebar_toolbar, title="")
-        self.split_view.set_sidebar(sidebar_page)
-        
-        # Content Page
-        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        content_box.set_margin_top(12) 
-        
-        content_toolbar = Adw.ToolbarView()
-        content_toolbar.set_content(content_box)
-        
-        content_page = Adw.NavigationPage(child=content_toolbar, title="")
-        self.split_view.set_content(content_page)
+        # Main Content Box
+        self.content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.append(self.content_box)
         
         # Control Bar (Search + Sort)
         control_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
@@ -141,7 +143,7 @@ class TopicsView(Gtk.Box):
         control_bar.set_margin_end(24)
         control_bar.set_margin_top(18)
         control_bar.set_margin_bottom(6)
-        content_box.append(control_bar)
+        self.content_box.append(control_bar)
 
         self.search_entry = Gtk.SearchEntry()
         self.search_entry.set_hexpand(True)
@@ -157,7 +159,7 @@ class TopicsView(Gtk.Box):
         self.scrolled = Gtk.ScrolledWindow()
         self.scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.scrolled.set_vexpand(True)
-        content_box.append(self.scrolled)
+        self.content_box.append(self.scrolled)
         
         clamp = Adw.Clamp()
         clamp.set_maximum_size(800)
@@ -182,56 +184,16 @@ class TopicsView(Gtk.Box):
         self.empty_page.set_title("Nenhum Tópico Encontrado")
         self.empty_page.set_description("Tente ajustar seus filtros ou adicione um novo tópico.")
         self.empty_page.set_icon_name("view-list-bullet-symbolic")
-        content_box.append(self.empty_page)
+        self.content_box.append(self.empty_page)
         
-        self.refresh_whole_view()
-
-    def refresh_whole_view(self):
-        self.refresh_sidebar()
         self.refresh_topic_list()
 
     def refresh_topics(self):
-        self.refresh_whole_view()
+        self.refresh_topic_list()
 
-    def refresh_sidebar(self):
-        child = self.sidebar_list.get_first_child()
-        while child:
-            self.sidebar_list.remove(child)
-            child = self.sidebar_list.get_first_child()
-            
-        all_row = Adw.ActionRow(title="Todos os Tópicos")
-        all_row.area_name = None
-        all_row.add_prefix(Gtk.Image.new_from_icon_name("view-list-bullet-symbolic"))
-        all_row.set_activatable(True)
-        self.sidebar_list.append(all_row)
-        
-        if self.current_area_filter is None:
-            self.sidebar_list.select_row(all_row)
-        
-        areas = self.logic.db.get_areas()
-        for area in areas:
-            row = Adw.ActionRow(title=area[1])
-            row.area_name = area[1]
-            row.set_activatable(True)
-            
-            if len(area) > 2 and area[2]:
-                dot = Gtk.Box()
-                dot.set_size_request(8, 8)
-                dot.set_valign(Gtk.Align.CENTER)
-                provider = Gtk.CssProvider()
-                css = f"* {{ background-color: {area[2]}; border-radius: 50%; }}"
-                provider.load_from_data(css.encode())
-                dot.get_style_context().add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-                row.add_prefix(dot)
-            
-            gesture = Gtk.GestureClick()
-            gesture.set_button(3)
-            gesture.connect("pressed", self.on_area_row_right_click, area)
-            row.add_controller(gesture)
-            
-            self.sidebar_list.append(row)
-            if self.current_area_filter == area[1]:
-                self.sidebar_list.select_row(row)
+    def refresh_whole_view(self):
+        """Bridge for internal calls to maintain compatibility."""
+        self.refresh_topics()
 
     def refresh_topic_list(self):
         child = self.list_box.get_first_child()
@@ -251,7 +213,7 @@ class TopicsView(Gtk.Box):
         for topic in topics:
             if self.current_area_filter and topic[2] != self.current_area_filter: continue
             if search_text and search_text not in normalize_str(topic[1]): continue
-            row = TopicRow(topic, self.logic, self.refresh_all_external if self.refresh_all_external else self.refresh_whole_view)
+            row = TopicRow(topic, self.logic, self.refresh_all_external if self.refresh_all_external else self.refresh_whole_view, self)
             self.list_box.append(row)
             filtered_count += 1
         self.scrolled.set_visible(filtered_count > 0)
@@ -266,6 +228,27 @@ class TopicsView(Gtk.Box):
 
     def on_search_changed(self, entry):
         self.refresh_topic_list()
+    
+    def on_edit_topic(self, topic):
+        win = TopicDetailsWindow(topic=topic, logic=self.logic, refresh_callback=self.refresh_all_external if self.refresh_all_external else self.refresh_whole_view, transient_for=self.get_native())
+        win.present()
+    
+    def on_delete_topic(self, topic):
+        dialog = Adw.MessageDialog(transient_for=self.get_native(), heading="Apagar Tópico?", body=f"Deseja realmente apagar o tópico '{topic[1]}'? Todas as revisões associadas também serão removidas.")
+        dialog.add_response("cancel", "Cancelar")
+        dialog.add_response("delete", "Apagar")
+        dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
+        dialog.connect("response", self.on_delete_topic_response, topic[0])
+        dialog.present()
+    
+    def on_delete_topic_response(self, dialog, response, topic_id):
+        if response == "delete":
+            self.logic.db.delete_topic(topic_id)
+            if self.refresh_all_external:
+                self.refresh_all_external()
+            else:
+                self.refresh_whole_view()
+        dialog.destroy()
 
     def on_row_activated(self, listbox, row):
         if hasattr(row, 'topic_id'):

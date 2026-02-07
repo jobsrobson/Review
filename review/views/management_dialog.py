@@ -1,4 +1,7 @@
 from gi.repository import Gtk, Adw, Gio, GObject, Gdk
+import re
+
+HEX_COLOR_REGEX = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 class ManagementDialog(Adw.Window):
     def __init__(self, logic, refresh_callback, **kwargs):
@@ -119,25 +122,22 @@ class ManagementDialog(Adw.Window):
             
             # Color indicator
             if len(area) > 2 and area[2]:
-                color_dot = Gtk.Box()
-                color_dot.set_size_request(16, 16)
-                color_dot.set_valign(Gtk.Align.CENTER)
-                color_dot.add_css_class("indicator-dot")
+                valid_color = False
+                if isinstance(area[2], str) and HEX_COLOR_REGEX.match(area[2].strip()):
+                    valid_color = True
                 
-                # Custom drawing for arbitrary colors or simple css provider
-                # For simplicity here we just use the style if possible or leave as dot
-                # Ideally we want the dot to have the color.
-                # Let's create a label with background color attributes or DrawingArea.
-                # Using a simple frame with BG color is easier.
-                frame = Gtk.Frame()
-                frame.set_size_request(16, 16)
-                frame.set_valign(Gtk.Align.CENTER)
-                provider = Gtk.CssProvider()
-                css = f"* {{ background-color: {area[2]}; border-radius: 50%; }}"
-                provider.load_from_data(css.encode())
-                context = frame.get_style_context()
-                context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-                row.add_prefix(frame)
+                if valid_color:
+                    frame = Gtk.Frame()
+                    frame.set_size_request(16, 16)
+                    frame.set_valign(Gtk.Align.CENTER)
+                    try:
+                        provider = Gtk.CssProvider()
+                        css = f"* {{ background-color: {area[2]}; border-radius: 50%; }}"
+                        provider.load_from_data(css.encode())
+                        context = frame.get_style_context()
+                        context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                        row.add_prefix(frame)
+                    except: pass
             
             # Wrapper for button alignment
             act_box = Gtk.Box(spacing=6)
@@ -171,15 +171,22 @@ class ManagementDialog(Adw.Window):
             row = Adw.ActionRow(title=tag[1])
             
             if len(tag) > 2 and tag[2]:
-                frame = Gtk.Frame()
-                frame.set_size_request(16, 16)
-                frame.set_valign(Gtk.Align.CENTER)
-                provider = Gtk.CssProvider()
-                css = f"* {{ background-color: {tag[2]}; border-radius: 50%; }}"
-                provider.load_from_data(css.encode())
-                context = frame.get_style_context()
-                context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-                row.add_prefix(frame)
+                valid_color = False
+                if isinstance(tag[2], str) and HEX_COLOR_REGEX.match(tag[2].strip()):
+                    valid_color = True
+
+                if valid_color:
+                    frame = Gtk.Frame()
+                    frame.set_size_request(16, 16)
+                    frame.set_valign(Gtk.Align.CENTER)
+                    try:
+                        provider = Gtk.CssProvider()
+                        css = f"* {{ background-color: {tag[2]}; border-radius: 50%; }}"
+                        provider.load_from_data(css.encode())
+                        context = frame.get_style_context()
+                        context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                        row.add_prefix(frame)
+                    except: pass
 
             # Wrapper for button alignment
             act_box = Gtk.Box(spacing=6)
@@ -249,7 +256,7 @@ class ManagementDialog(Adw.Window):
 
     def on_save_edit_dialog(self, btn, id, type, entry, color_btn, dlg):
         new_name = entry.get_text()
-        new_color = color_btn.get_rgba().to_string()
+        new_color = self.rgba_to_hex(color_btn.get_rgba())
         
         if not new_name:
             return
@@ -267,7 +274,7 @@ class ManagementDialog(Adw.Window):
 
     def on_add_area(self, btn):
         name = self.area_entry.get_text()
-        color = self.area_color_btn.get_rgba().to_string()
+        color = self.rgba_to_hex(self.area_color_btn.get_rgba())
         if name:
             self.logic.db.add_area(name, color)
             self.area_entry.set_text("")
@@ -283,13 +290,17 @@ class ManagementDialog(Adw.Window):
 
     def on_add_tag(self, btn):
         name = self.tag_entry.get_text()
-        color = self.tag_color_btn.get_rgba().to_string()
+        color = self.rgba_to_hex(self.tag_color_btn.get_rgba())
         if name:
             self.logic.db.add_managed_tag(name, color)
             self.tag_entry.set_text("")
             self.refresh_lists()
             if self.refresh_callback:
                 self.refresh_callback()
+
+    def rgba_to_hex(self, rgba):
+        return "#%02x%02x%02x" % (int(rgba.red*255), int(rgba.green*255), int(rgba.blue*255))
+
 
     def on_delete_tag(self, btn, tag_id):
         self.logic.db.delete_managed_tag(tag_id)
