@@ -57,7 +57,8 @@
                 "cp -r review /app/lib/review-app/",
                 "cp main.py /app/lib/review-app/",
                 "install -Dm755 /dev/stdin /app/bin/review <<'EOF'\n#!/bin/sh\nexport PYTHONPATH=/app/lib/review-app:$PYTHONPATH\ncd /app/lib/review-app\nexec python3 main.py \"$@\"\nEOF",
-                "install -Dm644 review/icons/review-app.svg /app/share/icons/hicolor/scalable/apps/com.github.jobsr.Review.svg",
+                "install -Dm644 review/icons/hicolor/scalable/apps/com.github.jobsr.Review.svg /app/share/icons/hicolor/scalable/apps/com.github.jobsr.Review.svg",
+                "install -Dm644 review/icons/hicolor/scalable/apps/*-symbolic.svg -t /app/share/icons/hicolor/scalable/apps/",
                 "install -Dm644 com.github.jobsr.Review.desktop /app/share/applications/com.github.jobsr.Review.desktop",
                 "install -Dm644 com.github.jobsr.Review.metainfo.xml /app/share/metainfo/com.github.jobsr.Review.metainfo.xml"
             ],

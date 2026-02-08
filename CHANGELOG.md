@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-02-08
+
+### Changed
+- Version bump to 2.0.1.
+
+## [2.0.0] - 2026-02-07
+
+### Added
+- Major Feature Update.
+- Fixed GTK theme parser warnings.
+- Database reset improvements.
+- UI strict color validation.
+
 ## [1.0.2] - 2026-02-07
 
 ### Added
