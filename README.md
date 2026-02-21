@@ -18,19 +18,10 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ### From Flatpak (Recommended)
 
-```bash
-# Build and install locally
-flatpak-builder --user --install --force-clean build-dir com.github.jobsr.Review.json
-```
-
-### From Source
+Open the Terminal in the project folder and install the already compiled .flatpak file.
 
 ```bash
-# Install dependencies
-sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adwaita-1 python3-cryptography
-
-# Run directly
-python3 main.py
+flatpak install --user Review-2.0.1.flatpak
 ```
 
 ## Building
@@ -64,11 +55,3 @@ See `debian/` directory for packaging files.
 2. **Start Studying**: Click on a topic to start the timer
 3. **Track Progress**: View your schedule in the calendar views
 4. **Manage**: Organize topics with areas and tags
-
-## License
-
-GPL-3.0-or-later
-
-## Author
-
-Robson Ricardo
